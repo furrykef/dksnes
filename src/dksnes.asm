@@ -19,15 +19,15 @@ constant DMA_FILL8_16($09)                  // fill 8-bit value into 16-bit regi
 // Assumes X is 8-bit and M is 16-bit
 macro PrepDma(evaluate channel, evaluate mode, evaluate dest_reg, evaluate src_addr, evaluate size) {
         ldx.b #{mode}
-        stx DMAP0+{channel}*$10
+        stx.w DMAP0+{channel}*$10
         ldx.b #{dest_reg}
-        stx BBAD0+{channel}*$10
+        stx.w BBAD0+{channel}*$10
         lda.w #{src_addr}
-        sta A1T0L+{channel}*$10
+        sta.w A1T0L+{channel}*$10
         ldx.b #{src_addr} >> 16
-        stx A1B0+{channel}*$10
+        stx.w A1B0+{channel}*$10
         lda.w #{size}
-        sta DAS0L+{channel}*$10
+        sta.w DAS0L+{channel}*$10
 }
 
 
@@ -54,96 +54,96 @@ start:
         clc         // clear carry to switch to native mode
         xce         // Xchange carry & emulation bit. native mode
         rep #$38    // Binary mode (decimal mode off), A/X/Y 16 bit
-        lda #0
+        lda.w #0
         tcd
-        ldx #$01ff
+        ldx.w #$01ff
         txs
         sep #$30    // X,Y,A are 8 bit numbers
-        lda #$8F    // screen off, full brightness
-        sta $2100   // brightness + screen enable register
-        stz $2101   // Sprite register (size + address in VRAM)
-        stz $2102   // Sprite registers (address of sprite memory [OAM])
-        stz $2103   //    ""                       ""
-        stz $2105   // Mode 0, = Graphic mode register
-        stz $2106   // noplanes, no mosaic, = Mosaic register
-        stz $2107   // Plane 0 map VRAM location
-        stz $2108   // Plane 1 map VRAM location
-        stz $2109   // Plane 2 map VRAM location
-        stz $210A   // Plane 3 map VRAM location
-        stz $210B   // Plane 0+1 Tile data location
-        stz $210C   // Plane 2+3 Tile data location
-        stz $210D   // Plane 0 scroll x (first 8 bits)
-        stz $210D   // Plane 0 scroll x (last 3 bits) #$0 - #$07ff
-        lda #$FF    // The top pixel drawn on the screen isn't the top one in the tilemap, it's the one above that.
-        sta $210E   // Plane 0 scroll y (first 8 bits)
-        sta $2110   // Plane 1 scroll y (first 8 bits)
-        sta $2112   // Plane 2 scroll y (first 8 bits)
-        sta $2114   // Plane 3 scroll y (first 8 bits)
-        lda #$07    // Since this could get quite annoying, it's better to edit the scrolling registers to fix this.
-        sta $210E   // Plane 0 scroll y (last 3 bits) #$0 - #$07ff
-        sta $2110   // Plane 1 scroll y (last 3 bits) #$0 - #$07ff
-        sta $2112   // Plane 2 scroll y (last 3 bits) #$0 - #$07ff
-        sta $2114   // Plane 3 scroll y (last 3 bits) #$0 - #$07ff
-        stz $210F   // Plane 1 scroll x (first 8 bits)
-        stz $210F   // Plane 1 scroll x (last 3 bits) #$0 - #$07ff
-        stz $2111   // Plane 2 scroll x (first 8 bits)
-        stz $2111   // Plane 2 scroll x (last 3 bits) #$0 - #$07ff
-        stz $2113   // Plane 3 scroll x (first 8 bits)
-        stz $2113   // Plane 3 scroll x (last 3 bits) #$0 - #$07ff
-        lda #$80    // increase VRAM address after writing to $2119
-        sta $2115   // VRAM address increment register
-        stz $2116   // VRAM address low
-        stz $2117   // VRAM address high
-        stz $211A   // Initial Mode 7 setting register
-        stz $211B   // Mode 7 matrix parameter A register (low)
-        lda #$01
-        sta $211B   // Mode 7 matrix parameter A register (high)
-        stz $211C   // Mode 7 matrix parameter B register (low)
-        stz $211C   // Mode 7 matrix parameter B register (high)
-        stz $211D   // Mode 7 matrix parameter C register (low)
-        stz $211D   // Mode 7 matrix parameter C register (high)
-        stz $211E   // Mode 7 matrix parameter D register (low)
-        sta $211E   // Mode 7 matrix parameter D register (high)
-        stz $211F   // Mode 7 center position X register (low)
-        stz $211F   // Mode 7 center position X register (high)
-        stz $2120   // Mode 7 center position Y register (low)
-        stz $2120   // Mode 7 center position Y register (high)
-        stz $2121   // Color number register ($0-ff)
-        stz $2123   // BG1 & BG2 Window mask setting register
-        stz $2124   // BG3 & BG4 Window mask setting register
-        stz $2125   // OBJ & Color Window mask setting register
-        stz $2126   // Window 1 left position register
-        stz $2127   // Window 2 left position register
-        stz $2128   // Window 3 left position register
-        stz $2129   // Window 4 left position register
-        stz $212A   // BG1, BG2, BG3, BG4 Window Logic register
-        stz $212B   // OBJ, Color Window Logic Register (or,and,xor,xnor)
-        sta $212C   // Main Screen designation (planes, sprites enable)
-        stz $212D   // Sub Screen designation
-        stz $212E   // Window mask for Main Screen
-        stz $212F   // Window mask for Sub Screen
-        lda #$30
-        sta $2130   // Color addition & screen addition init setting
-        stz $2131   // Add/Sub sub designation for screen, sprite, color
-        lda #$E0
-        sta $2132   // color data for addition/subtraction
-        stz $2133   // Screen setting (interlace x,y/enable SFX data)
-        stz $4200   // Enable V-blank, interrupt, Joypad register
-        lda #$FF
-        sta $4201   // Programmable I/O port
-        stz $4202   // Multiplicand A
-        stz $4203   // Multiplier B
-        stz $4204   // Multiplier C
-        stz $4205   // Multiplicand C
-        stz $4206   // Divisor B
-        stz $4207   // Horizontal Count Timer
-        stz $4208   // Horizontal Count Timer MSB (most significant bit)
-        stz $4209   // Vertical Count Timer
-        stz $420A   // Vertical Count Timer MSB
-        stz $420B   // General DMA enable (bits 0-7)
-        stz $420C   // Horizontal DMA (HDMA) enable (bits 0-7)
-        lda #$01
-        sta $420D   // Access cycle designation (slow/fast rom)
+        lda.b #$8F    // screen off, full brightness
+        sta.w $2100   // brightness + screen enable register
+        stz.w $2101   // Sprite register (size + address in VRAM)
+        stz.w $2102   // Sprite registers (address of sprite memory [OAM])
+        stz.w $2103   //    ""                       ""
+        stz.w $2105   // Mode 0, = Graphic mode register
+        stz.w $2106   // noplanes, no mosaic, = Mosaic register
+        stz.w $2107   // Plane 0 map VRAM location
+        stz.w $2108   // Plane 1 map VRAM location
+        stz.w $2109   // Plane 2 map VRAM location
+        stz.w $210A   // Plane 3 map VRAM location
+        stz.w $210B   // Plane 0+1 Tile data location
+        stz.w $210C   // Plane 2+3 Tile data location
+        stz.w $210D   // Plane 0 scroll x (first 8 bits)
+        stz.w $210D   // Plane 0 scroll x (last 3 bits) #$0 - #$07ff
+        lda.b #$FF    // The top pixel drawn on the screen isn't the top one in the tilemap, it's the one above that.
+        sta.w $210E   // Plane 0 scroll y (first 8 bits)
+        sta.w $2110   // Plane 1 scroll y (first 8 bits)
+        sta.w $2112   // Plane 2 scroll y (first 8 bits)
+        sta.w $2114   // Plane 3 scroll y (first 8 bits)
+        lda.b #$07    // Since this could get quite annoying, it's better to edit the scrolling registers to fix this.
+        sta.w $210E   // Plane 0 scroll y (last 3 bits) #$0 - #$07ff
+        sta.w $2110   // Plane 1 scroll y (last 3 bits) #$0 - #$07ff
+        sta.w $2112   // Plane 2 scroll y (last 3 bits) #$0 - #$07ff
+        sta.w $2114   // Plane 3 scroll y (last 3 bits) #$0 - #$07ff
+        stz.w $210F   // Plane 1 scroll x (first 8 bits)
+        stz.w $210F   // Plane 1 scroll x (last 3 bits) #$0 - #$07ff
+        stz.w $2111   // Plane 2 scroll x (first 8 bits)
+        stz.w $2111   // Plane 2 scroll x (last 3 bits) #$0 - #$07ff
+        stz.w $2113   // Plane 3 scroll x (first 8 bits)
+        stz.w $2113   // Plane 3 scroll x (last 3 bits) #$0 - #$07ff
+        lda.b #$80    // increase VRAM address after writing to $2119
+        sta.w $2115   // VRAM address increment register
+        stz.w $2116   // VRAM address low
+        stz.w $2117   // VRAM address high
+        stz.w $211A   // Initial Mode 7 setting register
+        stz.w $211B   // Mode 7 matrix parameter A register (low)
+        lda.b #$01
+        sta.w $211B   // Mode 7 matrix parameter A register (high)
+        stz.w $211C   // Mode 7 matrix parameter B register (low)
+        stz.w $211C   // Mode 7 matrix parameter B register (high)
+        stz.w $211D   // Mode 7 matrix parameter C register (low)
+        stz.w $211D   // Mode 7 matrix parameter C register (high)
+        stz.w $211E   // Mode 7 matrix parameter D register (low)
+        sta.w $211E   // Mode 7 matrix parameter D register (high)
+        stz.w $211F   // Mode 7 center position X register (low)
+        stz.w $211F   // Mode 7 center position X register (high)
+        stz.w $2120   // Mode 7 center position Y register (low)
+        stz.w $2120   // Mode 7 center position Y register (high)
+        stz.w $2121   // Color number register ($0-ff)
+        stz.w $2123   // BG1 & BG2 Window mask setting register
+        stz.w $2124   // BG3 & BG4 Window mask setting register
+        stz.w $2125   // OBJ & Color Window mask setting register
+        stz.w $2126   // Window 1 left position register
+        stz.w $2127   // Window 2 left position register
+        stz.w $2128   // Window 3 left position register
+        stz.w $2129   // Window 4 left position register
+        stz.w $212A   // BG1, BG2, BG3, BG4 Window Logic register
+        stz.w $212B   // OBJ, Color Window Logic Register (or,and,xor,xnor)
+        sta.w $212C   // Main Screen designation (planes, sprites enable)
+        stz.w $212D   // Sub Screen designation
+        stz.w $212E   // Window mask for Main Screen
+        stz.w $212F   // Window mask for Sub Screen
+        lda.b #$30
+        sta.w $2130   // Color addition & screen addition init setting
+        stz.w $2131   // Add/Sub sub designation for screen, sprite, color
+        lda.b #$E0
+        sta.w $2132   // color data for addition/subtraction
+        stz.w $2133   // Screen setting (interlace x,y/enable SFX data)
+        stz.w $4200   // Enable V-blank, interrupt, Joypad register
+        lda.b #$FF
+        sta.w $4201   // Programmable I/O port
+        stz.w $4202   // Multiplicand A
+        stz.w $4203   // Multiplier B
+        stz.w $4204   // Multiplier C
+        stz.w $4205   // Multiplicand C
+        stz.w $4206   // Divisor B
+        stz.w $4207   // Horizontal Count Timer
+        stz.w $4208   // Horizontal Count Timer MSB (most significant bit)
+        stz.w $4209   // Vertical Count Timer
+        stz.w $420A   // Vertical Count Timer MSB
+        stz.w $420B   // General DMA enable (bits 0-7)
+        stz.w $420C   // Horizontal DMA (HDMA) enable (bits 0-7)
+        lda.b #$01
+        sta.w $420D   // Access cycle designation (slow/fast rom)
 
         // *** init video ***
         // display and NMI are off when we get here
@@ -151,35 +151,35 @@ start:
         SetM16()
 
         // Clear VRAM
-        stz VMADDL
+        stz.w VMADDL
         PrepDma(0, DMA_FILL8_16, VMDATAL, Zero, 0)
         ldx.b #$01
-        stx MDMAEN
+        stx.w MDMAEN
 
         // Transfer CHR to VRAM $0000
-        stz VMADDL
+        stz.w VMADDL
         PrepDma(0, DMA_XFER16, VMDATAL, ChrData, ChrDataSize)
         ldx.b #$01
-        stx MDMAEN
+        stx.w MDMAEN
 
         // Init OAM, low and high tables
-        stz OAMADDL
+        stz.w OAMADDL
         PrepDma(0, DMA_FILL8_8, OAMDATA, ByteD240, 512)
         PrepDma(1, DMA_FILL8_8, OAMDATA, Zero, 32)
         ldx.b #$03
-        stx MDMAEN
+        stx.w MDMAEN
 
         SetM8()
 
         // Set video mode
         lda.b #$01                          // Mode 1, 8x8 tiles
-        sta BGMODE
-        sta BG12NBA                         // BG1 CHR at $1000
+        sta.w BGMODE
+        sta.w BG12NBA                         // BG1 CHR at $1000
         lda.b #$11                          // BG1 and sprites visible
-        sta TM
-        stz TS                              // no subscreen
+        sta.w TM
+        stz.w TS                              // no subscreen
         lda.b #$20                          // BG1 nametable at $2000, 32x32
-        sta BG1SC
+        sta.w BG1SC
 
         // Sprite nametable address will already be $0000, which is correct
 
@@ -272,9 +272,9 @@ SetPPUCTRL:
         bit.b #$04                          // Bit 2 (VRAM inc) of PPUCTRL set?
         beq +
         ldx.b #$81                          // Set 32-word increment if so
-+;      stx VMAIN
++;      stx.w VMAIN
         and.b #$80                          // Mask off everything but NMI enable flag
-        sta NMITIMEN
+        sta.w NMITIMEN
         plx
         pla
         rts
@@ -290,7 +290,7 @@ SetPPUMASK:
         bit.b #$18                          // Check BG and sprite enable bits of PPUMASK
         bne +
         ldx.b #$80                          // Turn display off if bits weren't set
-+;      stx INIDISP
++;      stx.w INIDISP
         plx
         pla
         rts
@@ -312,24 +312,24 @@ LoadGfx:
         bcs .end
         tay
         lda.b #$80                          // Ensure VRAM increment is 1
-        sta VMAIN
-        stz CGADD
+        sta.w VMAIN
+        stz.w CGADD
         SetM16()
         lda.w #$2000
-        sta VMADDL
+        sta.w VMADDL
         ldx.b #DMA_XFER16
-        stx DMAP0
+        stx.w DMAP0
         ldx.b #VMDATAL
-        stx BBAD0
+        stx.w BBAD0
         lda GfxTbl,y
-        sta A1T0L
+        sta.w A1T0L
         ldx.b #TitleScreenMap >> 16
-        stx A1B0
+        stx.w A1B0
         lda.w #TitleScreenMapSize
-        sta DAS0L
+        sta.w DAS0L
         PrepDma(1, DMA_XFER8, CGDATA, TitleScreenPal, TitleScreenPalSize)
         ldx.b #$03
-        stx MDMAEN
+        stx.w MDMAEN
         SetM8()
 .end:
         rts
@@ -341,8 +341,8 @@ CopyOrFillVramLoop:
         bcs +
         iny
 +;      lda ($00),y
-        sta VMDATAL
-        stz VMDATAH
+        sta.w VMDATAL
+        stz.w VMDATAH
         dex
         bne CopyOrFillVramLoop
         jmp $f21c
@@ -354,10 +354,10 @@ HandleVblankImpl:
         pha
 
         // Copy sprites from last frame to OAM
-        stz OAMADDL
+        stz.w OAMADDL
         PrepDma(0, DMA_XFER8, OAMDATA, MyOAM, 256)
         ldx.b #$01
-        stx MDMAEN
+        stx.w MDMAEN
 
         SetM8()
         jsr $c85f                           // run original vblank routine
@@ -371,25 +371,25 @@ HandleVblankImpl:
         clc
         adc.b #1
         inx
-        sta MyOAM,x
+        sta.w MyOAM,x
         lda $0200,x                         // get tile number
         inx
-        sta MyOAM,x
+        sta.w MyOAM,x
         lda $0200,x                         // get palette, flags
         and.b #$03                          // mask off all but the palette
         asl
-        sta $00
+        sta.b $00
         lda $0200,x
         and.b #$e0                          // mask off all but the v/h flip and priority flags
         eor.b #$20                          // invert priority flag
-        ora $00                             // put the shifted palette in
+        ora.b $00                           // put the shifted palette in
         inx
-        sta MyOAM,x
+        sta.w MyOAM,x
         lda $0200,x                         // get X coordinate
         dex
         dex
         dex
-        sta MyOAM,x
+        sta.w MyOAM,x
         inx                                 // move to next sprite in OAM
         inx
         inx
