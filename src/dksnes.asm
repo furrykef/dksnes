@@ -350,7 +350,6 @@ HandleVblankImpl:
         jsr $c85f                           // run original vblank routine
 
         // Convert NES version's OAM to our OAM
-        // @TODO@ -- ignores sprite priority
         // @TODO@ -- rather slow. Fine like this?
         SetM8()
         ldx.b #$00
@@ -368,7 +367,8 @@ HandleVblankImpl:
         asl
         sta $00
         lda $0200,x
-        and.b #$c0                          // mask off all but the v/h flip flags
+        and.b #$e0                          // mask off all but the v/h flip and priority flags
+        eor.b #$20                          // invert priority flag
         ora $00                             // put the shifted palette in
         inx
         sta MyOAM,x
