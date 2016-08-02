@@ -33,7 +33,7 @@ macro PrepDma(evaluate channel, evaluate mode, evaluate dest_reg, evaluate src_a
 
 constant MyRAM(0x0800)
 
-constant MyOAM(MyRAM)                       // 512 bytes (we're only using the low table)
+constant MyOAM(MyRAM)                       // 256 bytes (we're only using half of the low table)
 
 
 // Program output begins here
@@ -343,7 +343,7 @@ HandleVblankImpl:
 
         // Copy sprites from last frame to OAM
         stz OAMADDL
-        PrepDma(0, DMA_XFER8, OAMDATA, MyOAM, 512)
+        PrepDma(0, DMA_XFER8, OAMDATA, MyOAM, 256)
         ldx #$01
         stx MDMAEN
 
@@ -359,6 +359,8 @@ HandleVblankImpl:
         ldx.w #$0000
 .oam_loop:
         lda $0200,x                         // get Y coordinate
+        clc
+        adc.b #1
         inx
         sta MyOAM,x
         clc
