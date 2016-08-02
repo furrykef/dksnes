@@ -1,0 +1,74 @@
+Program execution begins here
+
+00:C79E:78        SEI
+00:C79F:D8        CLD
+00:C7A0:A9 10     LDA #$10
+00:C7A2:8D 00 20  STA $2000                 PPUCTRL
+00:C7A5:A2 FF     LDX #$FF
+00:C7A7:9A        TXS
+
+wait for vblank
+
+00:C7A8:AD 02 20  LDA $2002                 PPUSTATUS
+00:C7AB:29 80     AND #$80
+00:C7AD:F0 F9     BEQ $C7A8
+
+clear RAM
+
+00:C7AF:A0 07     LDY #$07
+00:C7B1:84 01     STY $0001
+00:C7B3:A0 00     LDY #$00
+00:C7B5:84 00     STY $0000
+
+clear one page of RAM
+
+00:C7B7:A9 00     LDA #$00
+00:C7B9:91 00     STA ($00),Y
+00:C7BB:88        DEY
+00:C7BC:D0 FB     BNE $C7B9                 loop back to "clear one page of RAM"
+
+00:C7BE:C6 01     DEC $0001
+00:C7C0:10 F7     BPL $C7B9                 loop back to "clear RAM"
+
+00:C7C2:20 E7 C7  JSR $C7E7                 init video
+00:C7C5:A9 7F     LDA #$7F
+00:C7C7:8D 11 05  STA $0511
+00:C7CA:A9 18     LDA #$18
+00:C7CC:85 51     STA $0051
+00:C7CE:A9 01     LDA #$01
+00:C7D0:85 4E     STA $004E
+00:C7D2:85 55     STA $0055
+00:C7D4:A9 00     LDA #$00
+00:C7D6:85 4F     STA $004F
+00:C7D8:A5 10     LDA $0010
+00:C7DA:49 80     EOR #$80
+00:C7DC:8D 00 20  STA $2000                 PPUCTRL
+00:C7DF:85 10     STA $0010
+
+Main loop, sort of. Just runs the LFSR.
+(Game logic must be in NMI.)
+
+00:C7E1:20 ED F4  JSR $F4ED
+00:C7E4:4C E1 C7  JMP $C7E1
+
+
+Looks like an LFSR. This is run continuously outside of vblank.
+
+00:F4ED:A5 18     LDA $0018
+00:F4EF:29 02     AND #$02
+00:F4F1:85 00     STA $0000
+00:F4F3:A5 19     LDA $0019
+00:F4F5:29 02     AND #$02
+00:F4F7:45 00     EOR $0000
+00:F4F9:18        CLC
+00:F4FA:F0 01     BEQ $F4FD
+00:F4FC:38        SEC
+00:F4FD:66 18     ROR $0018
+00:F4FF:66 19     ROR $0019
+00:F501:66 1A     ROR $001A
+00:F503:66 1B     ROR $001B
+00:F505:66 1C     ROR $001C
+00:F507:66 1D     ROR $001D
+00:F509:66 1E     ROR $001E
+00:F50B:66 1F     ROR $001F
+00:F50D:60        RTS

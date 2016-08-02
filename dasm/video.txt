@@ -1,0 +1,225 @@
+See also nmi.txt
+
+
+RAM:
+  * $0330: Index of end of display list
+  * $0331: Start of display list
+
+
+Known callers of VRAM copy/fill routine, or rather their return addresses on stack:
+  * C87D (NMI)
+  * C920 (when loading title screen?)
+  * CB62 (when loading level 1?)
+  * CB67 (when loading level 1?)
+
+
+Init video
+
+00:C7E7:A9 10     LDA #$10
+00:C7E9:8D 00 20  STA $2000                 PPUCTRL
+00:C7EC:85 10     STA $0010
+00:C7EE:A9 06     LDA #$06
+00:C7F0:8D 01 20  STA $2001                 PPUMASK
+00:C7F3:85 11     STA $0011
+00:C7F5:A9 00     LDA #$00
+00:C7F7:8D 05 20  STA $2005                 PPUSCROLL
+00:C7FA:85 12     STA $0012
+00:C7FC:8D 05 20  STA $2005                 PPUSCROLL
+00:C7FF:85 13     STA $0013
+00:C801:20 AE CB  JSR $CBAE
+00:C804:4C B7 CB  JMP $CBB7
+
+
+Load VRAM with display list pointed to by $c4a7+A
+
+00:C807:AA        TAX
+00:C808:BD A7 C4  LDA $C4A7,X
+00:C80B:85 00     STA $0000
+00:C80D:BD A8 C4  LDA $C4A8,X
+00:C810:85 01     STA $0001
+00:C812:4C 28 F2  JMP $F228
+
+
+00:CBAE:A9 00     LDA #$00
+00:CBB0:85 04     STA $0004
+00:CBB2:A9 FF     LDA #$FF
+00:CBB4:4C 92 F0  JMP $F092                 no clue what the code here does...
+
+
+Routine to clear nametable 0 and attribute table 0
+
+00:F1B4:AD 02 20  LDA $2002                 PPUSTATUS
+00:F1B7:A5 10     LDA $0010
+00:F1B9:29 FB     AND #$FB
+00:F1BB:8D 00 20  STA $2000                 PPUCTRL
+
+VRAM address to fill is $2000 (nametable 0)
+
+00:F1BE:A9 20     LDA #$20
+00:F1C0:8D 06 20  STA $2006                 PPUADDR
+00:F1C3:A9 00     LDA #$00
+00:F1C5:8D 06 20  STA $2006                 PPUADDR
+
+Fill 1K of VRAM (one name+pattern table) with 0x24
+
+00:F1C8:A2 04     LDX #$04
+00:F1CA:A0 00     LDY #$00
+00:F1CC:A9 24     LDA #$24
+00:F1CE:8D 07 20  STA $2007                 PPUDATA
+00:F1D1:88        DEY
+00:F1D2:D0 FA     BNE $F1CE
+00:F1D4:CA        DEX
+00:F1D5:D0 F7     BNE $F1CE
+
+VRAM address to fill is $23c0 (attribute table 0)
+
+00:F1D7:A9 23     LDA #$23
+00:F1D9:8D 06 20  STA $2006                 PPUADDR
+00:F1DC:A9 C0     LDA #$C0
+00:F1DE:8D 06 20  STA $2006                 PPUADDR
+
+Fill it with 0x00
+
+00:F1E1:A0 40     LDY #$40
+00:F1E3:A9 00     LDA #$00
+00:F1E5:8D 07 20  STA $2007                 PPUDATA
+00:F1E8:88        DEY
+00:F1E9:D0 FA     BNE $F1E5
+
+00:F1EB:60        RTS
+
+
+VRAM copy/fill routine (display list processor)
+Can be entered via F228
+Address to copy from will be in $00
+In NMI, $00 will be $0331. From other callers, it may be ROM.
+X will contain PPUSTATUS on exit; Y will contain 0
+
+First, load PPUADDR from the buffer
+
+00:F1EC:8D 06 20  STA $2006                 PPUADDR
+00:F1EF:C8        INY
+00:F1F0:B1 00     LDA ($00),Y
+00:F1F2:8D 06 20  STA $2006                 PPUADDR
+00:F1F5:C8        INY
+
+This next byte will be the number of bytes to copy, plus two flags:
+  Bit 7: bit 2 of $2002 will be set to the opposite of this
+         (so 0 = increment VRAM by 1; 1 = increment VRAM by 32)
+  Bit 6: 0 = copy, 1 = fill
+
+00:F1F6:B1 00     LDA ($00),Y               get size from buffer
+00:F1F8:0A        ASL                       is bit 7 of size set?
+00:F1F9:48        PHA                       push size (still shifted left once)
+00:F1FA:A5 10     LDA $0010
+00:F1FC:09 04     ORA #$04                  set bit 2 of A
+00:F1FE:B0 02     BCS $F202                 skip the AND if bit 7 of size was set
+00:F200:29 FB     AND #$FB                  clear bit 2 of A
+00:F202:8D 00 20  STA $2000                 PPUCTRL
+00:F205:85 10     STA $0010
+00:F207:68        PLA                       pop size (still shifted left once)
+
+This chunk sets A to number of bytes to copy, then puts it in X
+
+00:F208:0A        ASL                       was fill flag (bit 6) of size set?
+00:F209:90 03     BCC $F20E
+00:F20B:09 02     ORA #$02                  ensure carry will be set after shifting (set fill mode)
+00:F20D:C8        INY
+00:F20E:4A        LSR                       restore size to original value, with upper two bits clear
+00:F20F:4A        LSR                       this second shift will set carry to bit 6 of original size byte
+00:F210:AA        TAX                       put number of bytes to copy in X
+
+copy/fill loop (fills if carry is set)
+
+00:F211:B0 01     BCS $F214                 this can only be triggered by the last LSR
+00:F213:C8        INY                       skip this in fill mode
+00:F214:B1 00     LDA ($00),Y
+00:F216:8D 07 20  STA $2007                 PPUDATA
+00:F219:CA        DEX
+00:F21A:D0 F5     BNE $F211
+
+Add Y+1 to pointer at $00
+
+00:F21C:38        SEC
+00:F21D:98        TYA
+00:F21E:65 00     ADC $0000
+00:F220:85 00     STA $0000
+00:F222:A9 00     LDA #$00
+00:F224:65 01     ADC $0001
+00:F226:85 01     STA $0001
+
+fall through to routine at F228
+
+00:F228:AE 02 20  LDX $2002                 PPUSTATUS
+00:F22B:A0 00     LDY #$00
+00:F22D:B1 00     LDA ($00),Y               check MSB of next word to write to PPUADDR
+00:F22F:D0 BB     BNE $F1EC                 we're done if it's 0
+
+set scroll to word at $12
+
+00:F231:A5 12     LDA $0012
+00:F233:8D 05 20  STA $2005                 PPUSCROLL
+00:F236:A5 13     LDA $0013
+00:F238:8D 05 20  STA $2005                 PPUSCROLL
+00:F23B:60        RTS
+
+
+Routine that does something with display list
+
+00:F2D7:A0 00     LDY #$00
+00:F2D9:B1 02     LDA ($02),Y
+00:F2DB:29 0F     AND #$0F
+00:F2DD:85 05     STA $0005
+00:F2DF:B1 02     LDA ($02),Y
+00:F2E1:4A        LSR
+00:F2E2:4A        LSR
+00:F2E3:4A        LSR
+00:F2E4:4A        LSR
+00:F2E5:85 04     STA $0004
+00:F2E7:AE 30 03  LDX $0330
+00:F2EA:A5 01     LDA $0001
+00:F2EC:9D 31 03  STA $0331,X
+00:F2EF:20 2D F3  JSR $F32D
+00:F2F2:A5 00     LDA $0000
+00:F2F4:9D 31 03  STA $0331,X
+00:F2F7:20 2D F3  JSR $F32D
+00:F2FA:A5 04     LDA $0004
+00:F2FC:85 06     STA $0006
+00:F2FE:09 80     ORA #$80
+00:F300:9D 31 03  STA $0331,X
+00:F303:20 2D F3  JSR $F32D
+00:F306:C8        INY
+00:F307:B1 02     LDA ($02),Y
+00:F309:9D 31 03  STA $0331,X
+00:F30C:C6 06     DEC $0006
+00:F30E:D0 F3     BNE $F303
+00:F310:20 2D F3  JSR $F32D
+00:F313:18        CLC
+00:F314:A9 01     LDA #$01
+00:F316:65 00     ADC $0000
+00:F318:85 00     STA $0000
+00:F31A:A9 00     LDA #$00
+00:F31C:65 01     ADC $0001
+00:F31E:85 01     STA $0001
+00:F320:8E 30 03  STX $0330
+00:F323:C6 05     DEC $0005
+00:F325:D0 C3     BNE $F2EA
+00:F327:A9 00     LDA #$00
+00:F329:9D 31 03  STA $0331,X
+00:F32C:60        RTS
+
+
+Routine called after adding a byte to display list
+Seems to be a safeguard against buffer overflow
+This overflow never seems to occur in practice
+
+00:F32D:E8        INX
+00:F32E:8A        TXA
+00:F32F:C9 3F     CMP #$3F
+00:F331:90 0A     BCC $F33D
+00:F333:AE 30 03  LDX $0330
+00:F336:A9 00     LDA #$00
+00:F338:9D 31 03  STA $0331,X
+00:F33B:68        PLA                       return to caller's caller
+00:F33C:68        PLA
+00:F33D:60        RTS

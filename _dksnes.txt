@@ -1,0 +1,138 @@
+To do
+-----
+Find where PLAYER I and PLAYER II screens come from in two-player games.
+
+Find out how GAME OVER message is rendered and how it alters attribute table
+
+
+List of NES hardware register writes according to the logger
+------------------------------------------------------------
+We've logged only writes, not reads!
+
+[sorted by address]
+
+PC for each of these is after the write.
+
+reset
+    PC: C7A5
+    PC: C7DF
+
+init video
+    PC: C7EC
+    PC: C7F3
+    PC: C7FA
+    PC: C7FF
+
+NMI
+    PC: C867
+    PC: C86E
+    PC: C873
+    PC: C890
+    PC: C8EF
+
+routine at C8F3 (writes $4015, both times)
+    PC: C8FB
+    PC: C911
+
+routine at C9AD (writes $4015)
+    PC: CA22
+
+routine at CE7C (writes $4015)
+    PC: CE88
+
+routine at D19A (writes PPUMASK)
+    PC: D1A1
+
+VRAM clear routine
+    PC: F1BE
+    PC: F1C3
+    PC: F1C8
+    PC: F1D1
+    PC: F1DC
+    PC: F1E1
+    PC: F1E8
+
+VRAM copy/fill routine at F1EC
+    PC: F1EF
+    PC: F1F5
+    PC: F205
+    PC: F219
+    PC: F236
+    PC: F23B
+
+strobe controllers
+    PC: F513
+    PC: F51A
+
+routine at FA48 (called in NMI)
+    PC: FA4D
+
+routine at FA8F (sound)
+    PC: FA98
+    PC: FA9B
+
+routine at FA9C (sound)
+    PC: FAAA
+    PC: FAB2
+
+routine at FAB3 (sound)
+    PC: FAB6
+    PC: FABD
+
+routine at FAE0 (sound)
+    PC: FAE5
+
+routine at FB7E (sound)
+    PC: FBAA
+    PC: FBB2
+
+routine at FBB7 (sound)
+    PC: FBE0
+    PC: FBE4
+    PC: FBF0
+
+routine at FC19 (sound)
+    PC: FC5D
+    PC: FC62
+    PC: FC8E
+    PC: FCD9
+    PC: FCE9
+    PC: FCEE
+    PC: FD05
+
+routine at FD62 (sound)
+    PC: FE03
+    PC: FE08
+
+routine at FE09 (sound)
+    PC: FE31
+
+
+These should cover almost the entire game.
+Things I probably didn't test:
+  * Time running out (plays sound)
+  * Pausing (plays sound)
+  * Two-player mode ("PLAYER I" and "PLAYER II" screens)
+  * Game over message
+
+
+Writes to PPUCTRL
+-----------------
+These are the actual addresses of STA PPUCTRL instructions:
+
+C7A2 [in init code; bypassed by our init routine]
+C7DC
+C7E9
+C864
+C8EC
+F1BB
+F202
+
+
+Writes to PPUMASK
+-----------------
+These are the actual addresses of STA PPUMASK instructions:
+
+C7F0
+C88D
+D19E

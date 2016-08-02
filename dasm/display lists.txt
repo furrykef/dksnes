@@ -1,0 +1,10 @@
+Table at C4A7 (table of display lists)
+
+C4A7: dw $f55b                              level 1
+C4A9: dw $f8d9                              pie factory? (aliased to title screen)
+C4AB: dw $f7cd                              level 2
+C4AD: dw $f71c                              level 3
+C4AF: dw $f8d9                              Title screen
+C4B1: dw $fa1b                              HUD
+
+The next entry would be $0000, so I assume it's something else.
