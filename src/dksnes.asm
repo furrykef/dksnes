@@ -1,4 +1,5 @@
 // Written for bass v14
+// Note: $00 and $01 can freely be used for temp variables in some code
 arch snes.cpu
 
 include "snes.inc"
@@ -32,9 +33,7 @@ macro PrepDma(evaluate channel, evaluate mode, evaluate dest_reg, evaluate src_a
 
 constant MyRAM(0x0800)
 
-constant MyNametable(MyRAM)                 // 2 KB
-constant MyPalette(MyRAM+$800)              // 512 bytes
-constant MyOAM(MyRAM+$a00)
+constant MyOAM(MyRAM)                       // 512 bytes (we're only using the low table)
 
 
 // Program output begins here
@@ -164,7 +163,12 @@ start:
         ldx.b #$01
         stx MDMAEN
 
-        // @TODO@ -- clear OAM
+        // Init OAM, low and high tables
+        stz OAMADDL
+        PrepDma(0, DMA_FILL8_8, OAMDATA, ByteD240, 512)
+        PrepDma(1, DMA_FILL8_8, OAMDATA, Zero, 32)
+        ldx.b #$03
+        stx MDMAEN
 
         SetM8()
 
@@ -172,12 +176,13 @@ start:
         lda.b #$01                          // Mode 1, 8x8 tiles
         sta BGMODE
         sta BG12NBA                         // BG1 CHR at $1000
-        sta TM                              // BG1 visible
+        lda.b #$11                          // BG1 and sprites visible
+        sta TM
         stz TS                              // no subscreen
         lda.b #$20                          // BG1 nametable at $2000, 32x32
         sta BG1SC
 
-        // @TODO@ -- init sprite nametable address
+        // Sprite nametable address will already be $0000, which is correct
 
         // We'll be running from the other bank from now on
         lda.b #$81
@@ -199,6 +204,9 @@ DummyInterruptHandler:
 // Bytes and words used in DMA
 Zero:
         dw 0
+
+ByteD240:                                   // D stands for decimal
+        db 240
 
 
 // SNES header
@@ -333,10 +341,66 @@ HandleVblankImpl:
         SetM16()
         pha
 
-        // @TODO@ -- copy sprites to OAM
+        // Copy sprites from last frame to OAM
+        stz OAMADDL
+        PrepDma(0, DMA_XFER8, OAMDATA, MyOAM, 512)
+        ldx #$01
+        stx MDMAEN
 
         SetM8()
-        jsr $c85f                           // run original vblank rotine
+        jsr $c85f                           // run original vblank routine
+
+        // Convert NES version's OAM to our OAM
+        // @TODO@ -- ignores sprite priority
+        // @TODO@ -- vflip probably handled wrong
+        // @TODO@ -- slow!! Takes a little over half a scanline to process a sprite
+        SetM8()
+        SetXY16()
+        ldx.w #$0000
+        ldy.w #$0100
+.oam_loop:
+        lda $0200,x                         // get Y coordinate
+        inx
+        iny
+        sta MyOAM,x
+        sta MyOAM,y
+        lda $0200,x                         // get tile number
+        inx
+        iny
+        sta MyOAM,x
+        clc
+        adc.b #1
+        sta MyOAM,y
+        lda $0200,x                         // get palette, flags
+        and.b #$03                          // mask off all but the palette
+        lsr
+        sta $00
+        lda $0200,x
+        and.b #$c0                          // mask off all but the v/h flip flags
+        ora $00                             // put the shifted palette in
+        inx
+        iny
+        sta MyOAM,x
+        sta MyOAM,y
+        lda $0200,x                         // get X coordinate
+        dex
+        dex
+        dex
+        dey
+        dey
+        dey
+        sta MyOAM,x
+        sta MyOAM,y
+        inx                                 // move to next sprite in OAM
+        inx
+        inx
+        inx
+        iny
+        iny
+        iny
+        iny
+        cpx.w #$0100
+        bne .oam_loop
 
         SetM16()
         pla
@@ -405,6 +469,14 @@ origin $c88d
 
 origin $d19e
         jsr SetPPUMASK
+
+
+// These were originally reds from PPUSTATUS
+origin $f1b4
+        lda RDNMI
+
+origin $f228
+        ldx RDNMI
 
 
 origin $c807

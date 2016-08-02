@@ -1,2 +1,2 @@
-@C:\MFS\bass\bass\bass -o dk.sfc src/dksnes.asm
+@C:\MFS\bass\bass\bass -create -o dk.sfc src/dksnes.asm
 @pause
