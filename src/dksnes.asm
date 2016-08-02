@@ -371,9 +371,8 @@ HandleVblankImpl:
         lda.w $0200,x                       // get Y coordinate
         clc
         adc.b #1
-        cmp.b #0                            // don't let stuff wrap around from bottom
         bne +
-        lda.b #241
+        lda.b #241                          // don't let stuff wrap around from bottom
 +;      inx
         sta.w MyOAM,x
         lda.w $0200,x                       // get tile number
