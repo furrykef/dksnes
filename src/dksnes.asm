@@ -204,6 +204,9 @@ DummyInterruptHandler:
 Zero:
         dw 0
 
+Byte24:
+        db $24
+
 ByteD240:                                   // D stands for decimal
         db 240
 
@@ -497,3 +500,16 @@ origin $c8f2
 
 origin $f211
         jmp CopyOrFillVramLoop
+
+
+// Clear nametable
+origin $f1be
+        SetM16()
+        lda #$2000
+        sta VMADDL
+        PrepDma(0, DMA_FILL8_16, VMDATAL, Byte24, 32*30*2)
+        ldx #$01
+        stx MDMAEN
+        SetM8()
+        rts
+assert(origin() <= $f1ec)
