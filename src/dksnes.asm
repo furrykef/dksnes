@@ -204,9 +204,6 @@ DummyInterruptHandler:
 Zero:
         dw 0
 
-Byte24:
-        db $24
-
 ByteD240:                                   // D stands for decimal
         db 240
 
@@ -503,13 +500,17 @@ origin $f211
 
 
 // Clear nametable
+// Can't find a correct way to do a 16-bit fill with DMA
 origin $f1be
-        SetM16()
-        lda #$2000
-        sta VMADDL
-        PrepDma(0, DMA_FILL8_16, VMDATAL, Byte24, 32*30*2)
-        ldx #$01
-        stx MDMAEN
-        SetM8()
+        SetMXY16()
+        lda.w #$2000
+        sta.w VMADDL
+        lda.w #$0024
+        ldx.w #0
+-;      sta.w VMDATAL
+        inx
+        cpx.w #32*30
+        bne -
+        SetMXY8()
         rts
 assert(origin() <= $f1ec)

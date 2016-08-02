@@ -17,6 +17,10 @@ macro SetXY16() {
     rep #FLAG_XY8
 }
 
+macro SetMXY8() {
+    sep #FLAG_M8 | FLAG_XY8
+}
+
 macro SetMXY16() {
     rep #FLAG_M8 | FLAG_XY8
 }
