@@ -353,24 +353,21 @@ HandleVblankImpl:
         // Convert NES version's OAM to our OAM
         // @TODO@ -- ignores sprite priority
         // @TODO@ -- vflip probably handled wrong
-        // @TODO@ -- slow!! Takes a little over half a scanline to process a sprite
+        // @TODO@ -- rather slow. Fine like this?
         SetM8()
         SetXY16()
         ldx.w #$0000
-        ldy.w #$0100
 .oam_loop:
         lda $0200,x                         // get Y coordinate
         inx
-        iny
         sta MyOAM,x
-        sta MyOAM,y
+        clc
+        adc.b #8
         lda $0200,x                         // get tile number
         inx
-        iny
         sta MyOAM,x
         clc
         adc.b #1
-        sta MyOAM,y
         lda $0200,x                         // get palette, flags
         and.b #$03                          // mask off all but the palette
         lsr
@@ -379,26 +376,16 @@ HandleVblankImpl:
         and.b #$c0                          // mask off all but the v/h flip flags
         ora $00                             // put the shifted palette in
         inx
-        iny
         sta MyOAM,x
-        sta MyOAM,y
         lda $0200,x                         // get X coordinate
         dex
         dex
         dex
-        dey
-        dey
-        dey
         sta MyOAM,x
-        sta MyOAM,y
         inx                                 // move to next sprite in OAM
         inx
         inx
         inx
-        iny
-        iny
-        iny
-        iny
         cpx.w #$0100
         bne .oam_loop
 
