@@ -1,8 +1,6 @@
 To do
 -----
-Find where PLAYER I and PLAYER II screens come from in two-player games.
-
-Find out how GAME OVER message is rendered and how it alters attribute table
+Clear screen before PLAYER I and PLAYER II messages.
 
 
 Misc

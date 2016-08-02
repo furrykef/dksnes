@@ -270,8 +270,8 @@ SetPPUCTRL:
         phx
         ldx.b #$80                          // Assume VRAM increment should be 1
         bit.b #$04                          // Bit 2 (VRAM inc) of PPUCTRL set?
-        bne +
-        ldx.b #$81                          // Set 32-word increment if not
+        beq +
+        ldx.b #$81                          // Set 32-word increment if so
 +;      stx VMAIN
         and.b #$80                          // Mask off everything but NMI enable flag
         sta NMITIMEN
@@ -335,6 +335,19 @@ LoadGfx:
         rts
 
 
+// Replaces $F211 in the original code
+// We have to add an extra byte since VMDATA expects 16-bit words
+CopyOrFillVramLoop:
+        bcs +
+        iny
++;      lda ($00),y
+        sta VMDATAL
+        stz VMDATAH
+        dex
+        bne CopyOrFillVramLoop
+        jmp $f21c
+
+
 // We don't have to worry about preserving X or Y here
 HandleVblankImpl:
         SetM16()
@@ -343,7 +356,7 @@ HandleVblankImpl:
         // Copy sprites from last frame to OAM
         stz OAMADDL
         PrepDma(0, DMA_XFER8, OAMDATA, MyOAM, 256)
-        ldx #$01
+        ldx.b #$01
         stx MDMAEN
 
         SetM8()
@@ -456,16 +469,28 @@ origin $d19e
         jsr SetPPUMASK
 
 
-// These were originally reds from PPUSTATUS
+// These were originally reads from PPUSTATUS
 origin $f1b4
-        lda RDNMI
+        lda.w RDNMI
 
 origin $f228
-        ldx RDNMI
+        ldx.w RDNMI
 
 
+// These originally wrote to PPUADDR
+origin $f1ec
+        sta.w VMADDH
+
+origin $f1f2
+        sta.w VMADDL
+
+
+// Misc. patches
 origin $c807
         jmp LoadGfx
 
 origin $c8f2
         rts                                 // changed from RTI
+
+origin $f211
+        jmp CopyOrFillVramLoop
