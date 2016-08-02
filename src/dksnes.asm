@@ -42,8 +42,7 @@ base $808000
 
 ChrData:
         insert "../snes.chr"
-ChrDataEnd:
-constant ChrDataSize(ChrDataEnd - ChrData)
+constant ChrDataSize(pc() - ChrData)
 
 start:
         // Boilerplate SNES init code
@@ -352,7 +351,6 @@ HandleVblankImpl:
 
         // Convert NES version's OAM to our OAM
         // @TODO@ -- ignores sprite priority
-        // @TODO@ -- vflip probably handled wrong
         // @TODO@ -- rather slow. Fine like this?
         SetM8()
         ldx.b #$00
@@ -393,25 +391,29 @@ HandleVblankImpl:
 GfxTbl:
         dw Level1Map                        // level 1
         dw TitleScreenMap                   // unused
-        dw TitleScreenMap                   // level 2
-        dw TitleScreenMap                   // level 3
+        dw Level2Map                        // level 2
+        dw Level3Map                        // level 3
         dw TitleScreenMap                   // title screen
-        dw TitleScreenMap                   // HUD
 
 TitleScreenMap:
         insert "title.map"
-TitleScreenMapEnd:
-constant TitleScreenMapSize(TitleScreenMapEnd - TitleScreenMap)
+constant TitleScreenMapSize(pc() - TitleScreenMap)
 
 TitleScreenPal:
         insert "title.pal"
-TitleScreenPalEnd:
-constant TitleScreenPalSize(TitleScreenPalEnd - TitleScreenPal)
+constant TitleScreenPalSize(pc() - TitleScreenPal)
 
 Level1Map:
         insert "level1.map"
-Level1MapEnd:
-constant Level1MapSize(Level1MapEnd - Level1Map)
+constant Level1MapSize(pc() - Level1Map)
+
+Level2Map:
+        insert "level2.map"
+constant Level2MapSize(pc() - Level2Map)
+
+Level3Map:
+        insert "level3.map"
+constant Level3MapSize(pc() - Level1Map)
 
 
 assert(origin() <= $c000)
