@@ -321,6 +321,7 @@ LoadGfx:
         stx.w DMAP0
         ldx.b #VMDATAL
         stx.w BBAD0
+        // bass v14 won't let me write lda.w GfxTbl,y
         lda GfxTbl,y
         sta.w A1T0L
         ldx.b #TitleScreenMap >> 16
@@ -367,7 +368,7 @@ HandleVblankImpl:
         SetM8()
         ldx.b #$00
 .oam_loop:
-        lda $0200,x                         // get Y coordinate
+        lda.w $0200,x                       // get Y coordinate
         clc
         adc.b #1
         cmp.b #0                            // don't let stuff wrap around from bottom
@@ -375,20 +376,20 @@ HandleVblankImpl:
         lda.b #241
 +;      inx
         sta.w MyOAM,x
-        lda $0200,x                         // get tile number
+        lda.w $0200,x                       // get tile number
         inx
         sta.w MyOAM,x
-        lda $0200,x                         // get palette, flags
+        lda.w $0200,x                       // get palette, flags
         and.b #$03                          // mask off all but the palette
         asl
         sta.b $00
-        lda $0200,x
+        lda.w $0200,x
         and.b #$e0                          // mask off all but the v/h flip and priority flags
         eor.b #$20                          // invert priority flag
         ora.b $00                           // put the shifted palette in
         inx
         sta.w MyOAM,x
-        lda $0200,x                         // get X coordinate
+        lda.w $0200,x                       // get X coordinate
         dex
         dex
         dex
