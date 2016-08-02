@@ -355,24 +355,19 @@ HandleVblankImpl:
         // @TODO@ -- vflip probably handled wrong
         // @TODO@ -- rather slow. Fine like this?
         SetM8()
-        SetXY16()
-        ldx.w #$0000
+        ldx.b #$00
 .oam_loop:
         lda $0200,x                         // get Y coordinate
         clc
         adc.b #1
         inx
         sta MyOAM,x
-        clc
-        adc.b #8
         lda $0200,x                         // get tile number
         inx
         sta MyOAM,x
-        clc
-        adc.b #1
         lda $0200,x                         // get palette, flags
         and.b #$03                          // mask off all but the palette
-        lsr
+        asl
         sta $00
         lda $0200,x
         and.b #$c0                          // mask off all but the v/h flip flags
@@ -388,7 +383,6 @@ HandleVblankImpl:
         inx
         inx
         inx
-        cpx.w #$0100
         bne .oam_loop
 
         SetM16()
