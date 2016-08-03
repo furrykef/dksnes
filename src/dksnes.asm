@@ -357,7 +357,8 @@ CopyOrFillVramLoop:
         iny
 +;      lda ($00),y
         sta.w VMDATAL
-        stz.w VMDATAH
+        lda.b #$08                          // palette 3 (DK palette)
+        sta.w VMDATAH
         dex
         bne CopyOrFillVramLoop
         jmp $f21c
