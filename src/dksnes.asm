@@ -35,6 +35,8 @@ macro PrepDma(evaluate channel, evaluate mode, evaluate dest_reg, evaluate src_a
 constant MyRAM(0x0800)
 
 constant MyOAM(MyRAM)                       // 256 bytes (we're only using half of the low table)
+constant DKFallFlag(MyRAM+$0100)
+constant BlueFireballFlag(MyRAM+$0101)
 
 
 // Program output begins here
@@ -184,6 +186,10 @@ start:
 
         // Sprite nametable address will already be $0000, which is correct
 
+        // Clear vars
+        stz.w DKFallFlag
+        stz.w BlueFireballFlag
+
         // We'll be running from the other bank from now on
         lda.b #$81
         pha
@@ -318,6 +324,7 @@ LoadGfx:
         lda.b #$80                          // Ensure VRAM increment is 1
         sta.w VMAIN
         stz.w CGADD
+        stz.w BlueFireballFlag
         SetM16()
 
         lda.w #$2000
@@ -375,16 +382,87 @@ CopyOrFillVramLoop:
         jmp $f21c
 
 
+// This routine originally loaded the display list for when DK falls
+// We have to patch it so DK has the correct palette
+// Notably, our version does not remove the writes to palette VRAM
+// (so it will clobber VRAM at $3fxx)
+DKFalls:
+        lda.b #1
+        sta.w DKFallFlag
+
+        // Original code which our hook patched over
+        ldy.b #$16
+        lda.b #$0c
+        jmp $c823
+
+
+// Replaces code at $d89a
+// (original code still clobbers VRAM at $3fxx)
+MakeFireballsBlue:
+        lda.b #1
+        sta.w BlueFireballFlag
+
+        // Original code which our hook patched over
+        lda.b #$19
+        sta.b $00
+        lda.b #$3f
+        sta.b $01
+        lda.b #$46
+        jsr $c815
+        rts
+
+
+// Replaces code at $d7f2
+// (original code still clobbers VRAM at $3fxx)
+MakeFireballsRed:
+        lda.b #0
+        sta.w BlueFireballFlag
+
+        // Original code which our hook patched over
+        lda.b #$19
+        sta.b $00
+        lda.b #$3f
+        sta.b $01
+        lda.b #$43
+        jsr $c815
+        rts
+
+
 // We don't have to worry about preserving X or Y here
 HandleVblankImpl:
         SetM16()
         pha
 
-        // Copy sprites from last frame to OAM
+        // Prepare to copy sprites from last frame to OAM
         stz.w OAMADDL
         PrepDma(0, DMA_XFER8, OAMDATA, MyOAM, 256)
+
+        // Prepare to copy fireball palette
+        ldx.b #160
+        stx.w CGADD
+        PrepDma(1, DMA_XFER8, CGDATA, Level1Pal+160*2, 32)
+        ldx.w BlueFireballFlag
+        beq +
+        // Fireballs are blue
+        lda.w #BlueFireballPal
+        sta.w A1T1L
++
+        // Let's do it to it
+        ldx.b #$03
+        stx.w MDMAEN
+
+        // Do any palette updates
+        ldx.w DKFallFlag
+        beq .no_fall
+        // Put DK's palette in sprite palette 4
+        ldx.b #176
+        stx.w CGADD
+        PrepDma(0, DMA_XFER8, CGDATA, Level3Pal + 32*2, 32)
         ldx.b #$01
         stx.w MDMAEN
+        ldx.b #0
+        stx.w DKFallFlag
+.no_fall:
 
         SetM8()
         jsr $c85f                           // run original vblank routine
@@ -478,6 +556,11 @@ Level3Pal:
 constant Level3PalSize(pc() - Level3Pal)
 
 
+BlueFireballPal:
+        include "blue_fireball_pal.asm"
+constant BlueFireballPalSize(pc() - BlueFireballPal)
+
+
 assert(origin() <= $c000)
 origin $c000
 
@@ -532,6 +615,21 @@ origin $f1ec
 
 origin $f1f2
         sta.w VMADDL
+
+
+// This code prepares the display list when DK falls
+origin $cd82
+        jmp DKFalls
+
+
+// This code makes fireballs blue (might make other display list changes too)
+origin $d89a
+        jmp MakeFireballsBlue
+
+
+// This has to do with making fireballs red (but seems to be called at other times too)
+origin $d7f2
+        jmp MakeFireballsRed
 
 
 // Misc. patches

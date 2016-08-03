@@ -1,0 +1,4 @@
+dw 0
+dw COLOR_2C
+dw COLOR_16
+dw COLOR_13
