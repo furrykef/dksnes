@@ -3,6 +3,7 @@
 arch snes.cpu
 
 include "snes.inc"
+include "nescolors.inc"
 
 macro assert(evaluate condition) {
     if !{condition} {
@@ -297,12 +298,12 @@ SetPPUMASK:
 
 
 // In:
-//  A = 0 for level 1
-//      2 is unused (pie factory leftover?)
-//      4 for level 2
-//      6 for level 3
-//      8 for title screen
-//      A for HUD
+//  A = $00 for level 1
+//      $02 is unused (pie factory leftover?)
+//      $04 for level 2
+//      $06 for level 3
+//      $08 for title screen
+//      $0A for HUD
 // Out:
 //  X = PPUSTATUS (we'll ignore this)
 //
@@ -315,20 +316,33 @@ LoadGfx:
         sta.w VMAIN
         stz.w CGADD
         SetM16()
+
         lda.w #$2000
         sta.w VMADDL
         ldx.b #DMA_XFER16
         stx.w DMAP0
         ldx.b #VMDATAL
         stx.w BBAD0
-        // bass v14 won't let me write lda.w GfxTbl,y
-        lda GfxTbl,y
+        // bass v14 won't let me write lda.w MapTbl,y
+        lda MapTbl,y
         sta.w A1T0L
-        ldx.b #TitleScreenMap >> 16
+        ldx.b #$81
         stx.w A1B0
-        lda.w #TitleScreenMapSize
+        lda.w #32*30*2
         sta.w DAS0L
-        PrepDma(1, DMA_XFER8, CGDATA, TitleScreenPal, TitleScreenPalSize)
+
+        ldx.b #DMA_XFER8
+        stx.w DMAP1
+        ldx.b #CGDATA
+        stx.w BBAD1
+        // bass v14 again won't allow lda.w here
+        lda PalTbl,y
+        sta.w A1T1L
+        ldx.b #$81
+        stx.w A1B1
+        lda.w #512
+        sta.w DAS1L
+
         ldx.b #$03
         stx.w MDMAEN
         SetM8()
@@ -364,7 +378,7 @@ HandleVblankImpl:
         jsr $c85f                           // run original vblank routine
 
         // Convert NES version's OAM to our OAM
-        // @TODO@ -- rather slow. Fine like this?
+        // Rather slow, but the game seems to run fine anyway
         SetM8()
         ldx.b #$00
 .oam_loop:
@@ -404,12 +418,20 @@ HandleVblankImpl:
         rti
 
 
-GfxTbl:
+MapTbl:
         dw Level1Map                        // level 1
         dw TitleScreenMap                   // unused
         dw Level2Map                        // level 2
         dw Level3Map                        // level 3
         dw TitleScreenMap                   // title screen
+
+// Same order as above
+PalTbl:
+        dw Level1Pal
+        dw TitleScreenPal
+        dw Level1Pal
+        dw Level3Pal
+        dw TitleScreenPal
 
 TitleScreenMap:
         insert "title.map"
@@ -423,6 +445,10 @@ Level1Map:
         insert "level1.map"
 constant Level1MapSize(pc() - Level1Map)
 
+Level1Pal:
+        include "level1pal.asm"
+constant Level1PalSize(pc() - Level1Pal)
+
 Level2Map:
         insert "level2.map"
 constant Level2MapSize(pc() - Level2Map)
@@ -430,6 +456,10 @@ constant Level2MapSize(pc() - Level2Map)
 Level3Map:
         insert "level3.map"
 constant Level3MapSize(pc() - Level1Map)
+
+Level3Pal:
+        include "level1pal.asm"
+constant Level3PalSize(pc() - Level3Pal)
 
 
 assert(origin() <= $c000)
