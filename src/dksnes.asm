@@ -292,6 +292,9 @@ SetPPUMASK:
         bne +
         ldx.b #$80                          // Turn display off if bits weren't set
 +;      stx.w INIDISP
+        and.b #$10                          // Mask out all but sprite flag
+        ora.b #$01                          // BG always on
+        sta.w TM
         plx
         pla
         rts
@@ -357,8 +360,16 @@ CopyOrFillVramLoop:
         iny
 +;      lda ($00),y
         sta.w VMDATAL
+        php                                 // need to preserve carry flag
+        cmp.b #$62
+        beq .girder
         lda.b #$08                          // palette 3 (DK palette)
+        bra .store
+.girder:
+        lda.b #$00
+.store:
         sta.w VMDATAH
+        plp                                 // restore carry flag
         dex
         bne CopyOrFillVramLoop
         jmp $f21c
