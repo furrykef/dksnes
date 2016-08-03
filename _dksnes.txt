@@ -2,6 +2,8 @@ Todo
 ----
 Pausing does not hide sprites (probably a write to PPUMASK)
 
+DK falls with wrong colors, due to the game replacing the hammer palette with the DK palette during the level.
+
 
 Misc
 ----

@@ -429,7 +429,7 @@ MapTbl:
 PalTbl:
         dw Level1Pal
         dw TitleScreenPal
-        dw Level1Pal
+        dw Level2Pal
         dw Level3Pal
         dw TitleScreenPal
 
@@ -438,7 +438,7 @@ TitleScreenMap:
 constant TitleScreenMapSize(pc() - TitleScreenMap)
 
 TitleScreenPal:
-        insert "title.pal"
+        include "titlepal.asm"
 constant TitleScreenPalSize(pc() - TitleScreenPal)
 
 Level1Map:
@@ -453,12 +453,16 @@ Level2Map:
         insert "level2.map"
 constant Level2MapSize(pc() - Level2Map)
 
+Level2Pal:
+        include "level2pal.asm"
+constant Level2PalSize(pc() - Level2Pal)
+
 Level3Map:
         insert "level3.map"
 constant Level3MapSize(pc() - Level1Map)
 
 Level3Pal:
-        include "level1pal.asm"
+        include "level3pal.asm"
 constant Level3PalSize(pc() - Level3Pal)
 
 
