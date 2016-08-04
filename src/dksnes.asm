@@ -505,6 +505,8 @@ HandleVblankImpl:
 
         SetM16()
         pla
+        ldx.b #$80                          // enable NMIs
+        stx.w NMITIMEN
         rti
 
 
@@ -578,9 +580,6 @@ origin $c7e9
         jsr SetPPUCTRL
 
 origin $c864
-        jsr SetPPUCTRL
-
-origin $c8ec
         jsr SetPPUCTRL
 
 origin $f1bb

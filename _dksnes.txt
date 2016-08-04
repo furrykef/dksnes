@@ -1,6 +1,13 @@
+To do
+-----
+Fix HUD in two-player mode
+
+
 Misc
 ----
 The first attract mode (as well as presumably all others) acts different, no doubt due to the RNG pulling different numbers. It seems to act OK, though.
+
+Consider adding high score preservation as an extra feature.
 
 
 List of NES hardware register writes according to the logger
@@ -122,7 +129,7 @@ C7A2 [in init code; bypassed by our init routine]
 C7DC
 C7E9
 C864
-C8EC
+C8EC [at end of vblank; we should ignore this]
 F1BB
 F202
 
