@@ -9,6 +9,11 @@ The first attract mode (as well as presumably all others) acts different, no dou
 
 Consider adding high score preservation as an extra feature.
 
+Possible sound tools/engines:
+  * snesmod
+  * xm2snes (I think there's a tool by this name)
+  * SNES GSS
+
 
 List of NES hardware register writes according to the logger
 ------------------------------------------------------------
@@ -129,7 +134,7 @@ C7A2 [in init code; bypassed by our init routine]
 C7DC
 C7E9
 C864
-C8EC [at end of vblank; we should ignore this]
+C8EC [at end of vblank; we should skip this]
 F1BB
 F202
 

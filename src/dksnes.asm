@@ -39,12 +39,12 @@ constant DKFallFlag(MyRAM+$0100)
 constant BlueFireballFlag(MyRAM+$0101)
 
 
-// Program output begins here
+// Assembly output begins here
 
 base $808000
 
 ChrData:
-        insert "../snes.chr"
+        insert "../assets/gfx.chr"
 constant ChrDataSize(pc() - ChrData)
 
 start:

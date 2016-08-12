@@ -19,6 +19,7 @@ def main(argv=None):
                 for b0, b1 in zip(bitplane0, bitplane1):
                     outfile.write(bytes([b0]))
                     outfile.write(bytes([b1]))
+                # Comment out this line to get 2 BPP SNES format
                 outfile.write(b'\0' * 16)
 
 
